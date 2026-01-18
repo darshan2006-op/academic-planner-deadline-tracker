@@ -262,19 +262,29 @@ const app = {
      * @param {string} taskId - ID of task to delete
      */
     deleteTask(taskId) {
-        if (confirm('Are you sure you want to delete this deadline?')) {
+        // 1. Find the task to get its title
+        const tasks = StorageManager.getTasks();
+        const taskToDelete = tasks.find(t => t.id === taskId);
+        
+        if (!taskToDelete) return;
+
+        // 2. Prepare message
+        const message = `Are you sure you want to delete the deadline: "${taskToDelete.title}"?`;
+
+        // 3. Use the new Custom Modal with your loading animation inside
+        UI.showConfirmModal(message, () => {
             const taskElement = document.querySelector(`[data-task-id="${taskId}"] .icon-btn.delete`);
             if (taskElement) {
                 taskElement.classList.add('btn-loading');
                 taskElement.disabled = true;
-                
-                setTimeout(() => {
-                    StorageManager.deleteTask(taskId);
-                    UI.init();
-                    console.log('🗑️ Task deleted!');
-                }, 300);
             }
-        }
+            
+            setTimeout(() => {
+                StorageManager.deleteTask(taskId);
+                UI.init();
+                console.log('🗑️ Task deleted!');
+            }, 300);
+        });
     },
 
     /**
