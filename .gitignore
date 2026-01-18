@@ -57,3 +57,6 @@ coverage/
 # Package lock files (not needed for pure HTML/CSS/JS)
 package-lock.json
 yarn.lock
+
+
+command.txt
