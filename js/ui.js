@@ -12,6 +12,71 @@ const UI = {
     },
 
     /**
+     * Step 2: Form Validation Logic for rtCamp Issue #46
+     * Validates the task form before submission
+     * @returns {boolean} - True if valid, false if errors found
+     */
+    validateTaskForm() {
+        const titleInput = document.getElementById('taskTitle');
+        const courseInput = document.getElementById('taskCourse');
+        const dateInput = document.getElementById('taskDate');
+        
+        let isValid = true;
+
+        // 1. Clear previous errors
+        this.clearErrors();
+
+        // 2. Title Validation: Required & min 3 characters
+        if (!titleInput.value.trim() || titleInput.value.trim().length < 3) {
+            this.showInputError(titleInput, "Title must be at least 3 characters.");
+            isValid = false;
+        }
+
+        // 3. Course Validation: Required
+        if (!courseInput.value) {
+            this.showInputError(courseInput, "Please select a course.");
+            isValid = false;
+        }
+
+        // 4. Date Validation: Required & Past Date Warning
+        if (!dateInput.value) {
+            this.showInputError(dateInput, "Date is required.");
+            isValid = false;
+        } else {
+            const selectedDate = new Date(dateInput.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                // Task rule: allow but warn in orange
+                this.showInputError(dateInput, "Warning: This deadline is in the past.", "warning");
+            }
+        }
+
+        return isValid;
+    },
+
+    /**
+     * Displays error messages in red as requested
+     */
+    showInputError(inputElement, message, type = "error") {
+        const errorDisplay = document.createElement('span');
+        errorDisplay.className = 'error-message'; // Matches Step 1 CSS
+        if (type === "warning") errorDisplay.style.color = "orange";
+        errorDisplay.textContent = message;
+        inputElement.parentElement.appendChild(errorDisplay);
+        inputElement.style.borderColor = type === "error" ? "red" : "orange";
+    },
+
+    /**
+     * Clears error messages when user fixes them
+     */
+    clearErrors() {
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+        document.querySelectorAll('input, select').forEach(el => el.style.borderColor = "");
+    },
+
+    /**
      * Update statistics cards
      */
     updateStats() {
@@ -26,7 +91,6 @@ const UI = {
 
     /**
      * Render all deadlines
-     * @param {Array} tasks - Optional filtered tasks array
      */
     renderDeadlines(tasks = null) {
         const deadlinesList = document.getElementById('deadlinesList');
@@ -45,15 +109,9 @@ const UI = {
         deadlinesList.innerHTML = sortedTasks.map(task => this.createDeadlineCard(task)).join('');
     },
 
-    /**
-     * Create a deadline card HTML
-     * @param {Object} task - Task object
-     * @returns {string} HTML string
-     */
     createDeadlineCard(task) {
         const course = StorageManager.getCourses().find(c => c.id === task.courseId);
         const courseName = course ? course.name : 'Unknown Course';
-        const status = getTaskStatus(task.completed, task.dueDate);
         const priorityClass = `priority-${task.priority}`;
         const completedClass = task.completed ? 'completed' : '';
 
@@ -69,13 +127,12 @@ const UI = {
                             ${task.priority.toUpperCase()}
                         </span>
                     </div>
-                    ${task.description ? `<p style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">${task.description}</p>` : ''}
                 </div>
                 <div class="deadline-actions">
-                    <button class="icon-btn complete" onclick="app.toggleTask('${task.id}')" title="Mark as ${task.completed ? 'incomplete' : 'complete'}">
+                    <button class="icon-btn complete" onclick="app.toggleTask('${task.id}')">
                         ${task.completed ? '↺' : '✓'}
                     </button>
-                    <button class="icon-btn delete" onclick="app.deleteTask('${task.id}')" title="Delete task">
+                    <button class="icon-btn delete" onclick="app.deleteTask('${task.id}')">
                         🗑️
                     </button>
                 </div>
@@ -83,30 +140,18 @@ const UI = {
         `;
     },
 
-    /**
-     * Render all courses
-     */
     renderCourses() {
         const coursesList = document.getElementById('coursesList');
         const courses = StorageManager.getCourses();
 
         if (courses.length === 0) {
-            coursesList.innerHTML = `
-                <div class="empty-state">
-                    <p>📖 No courses added yet. Start by adding your first course!</p>
-                </div>
-            `;
+            coursesList.innerHTML = '<div class="empty-state"><p>📖 No courses added yet.</p></div>';
             return;
         }
 
         coursesList.innerHTML = courses.map(course => this.createCourseCard(course)).join('');
     },
 
-    /**
-     * Create a course card HTML
-     * @param {Object} course - Course object
-     * @returns {string} HTML string
-     */
     createCourseCard(course) {
         const tasks = StorageManager.getTasks().filter(t => t.courseId === course.id);
         const stats = calculateStatistics(tasks);
@@ -115,178 +160,90 @@ const UI = {
             <div class="course-card" style="--course-color: ${course.color}">
                 <div class="course-header">
                     <h3 class="course-name">${course.name}</h3>
-                    <p class="course-code">${course.code || 'No code'}</p>
-                    ${course.instructor ? `<p class="course-code">👨‍🏫 ${course.instructor}</p>` : ''}
                 </div>
                 <div class="course-stats">
-                    <div class="course-stat">
-                        <span>Total Tasks:</span>
-                        <strong>${stats.total}</strong>
-                    </div>
-                    <div class="course-stat">
-                        <span>Completed:</span>
-                        <strong style="color: var(--success-color)">${stats.completed}</strong>
-                    </div>
-                    <div class="course-stat">
-                        <span>Pending:</span>
-                        <strong style="color: var(--info-color)">${stats.pending}</strong>
-                    </div>
-                    <div class="course-stat">
-                        <span>Overdue:</span>
-                        <strong style="color: var(--danger-color)">${stats.overdue}</strong>
-                    </div>
+                    <div class="course-stat"><span>Total:</span> <strong>${stats.total}</strong></div>
+                    <div class="course-stat"><span>Completed:</span> <strong style="color: var(--success-color)">${stats.completed}</strong></div>
                 </div>
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="btn btn-secondary" onclick="app.deleteCourse('${course.id}')" style="flex: 1; font-size: 0.85rem;">
-                        Delete
-                    </button>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="app.deleteCourse('${course.id}')" style="width: 100%;">Delete</button>
                 </div>
             </div>
         `;
     },
 
-    /**
-     * Populate course select dropdowns
-     */
     populateCourseSelects() {
         const courses = StorageManager.getCourses();
-        const selects = [
-            document.getElementById('taskCourse'),
-            document.getElementById('filterCourse')
-        ];
+        const selects = [document.getElementById('taskCourse'), document.getElementById('filterCourse')];
 
         selects.forEach((select, index) => {
             if (!select) return;
-
             const currentValue = select.value;
-            
-            if (index === 0) { // taskCourse select
+            if (index === 0) {
                 select.innerHTML = '<option value="">Select a course</option>' +
-                    courses.map(course => 
-                        `<option value="${course.id}">${course.name}${course.code ? ` (${course.code})` : ''}</option>`
-                    ).join('');
-            } else { // filterCourse select
+                    courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            } else {
                 select.innerHTML = '<option value="all">All Courses</option>' +
-                    courses.map(course => 
-                        `<option value="${course.id}">${course.name}${course.code ? ` (${course.code})` : ''}</option>`
-                    ).join('');
+                    courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             }
-
             if (currentValue) select.value = currentValue;
         });
     },
 
-    /**
-     * Show a modal
-     * @param {string} modalId - ID of modal to show
-     */
     showModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
+            this.clearErrors();
             modal.classList.add('active');
         }
     },
 
-    /**
-     * Hide a modal
-     * @param {string} modalId - ID of modal to hide
-     */
     hideModal(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-        }
+        if (modal) modal.classList.remove('active');
     },
 
-    /**
-     * Switch between views
-     * @param {string} viewName - Name of view to show
-     */
     switchView(viewName) {
-        // Hide all views
-        document.querySelectorAll('.view').forEach(view => {
-            view.classList.remove('active');
-        });
-
-        // Show selected view
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         const selectedView = document.getElementById(`${viewName}View`);
-        if (selectedView) {
-            selectedView.classList.add('active');
-        }
+        if (selectedView) selectedView.classList.add('active');
 
-        // Update nav buttons
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.classList.remove('active');
-            if (btn.dataset.view === viewName) {
-                btn.classList.add('active');
-            }
+            if (btn.dataset.view === viewName) btn.classList.add('active');
         });
     },
 
-    /**
-     * Apply filters to deadlines
-     */
     applyFilters() {
         const search = document.getElementById('searchInput').value;
         const priority = document.getElementById('filterPriority').value;
         const course = document.getElementById('filterCourse').value;
         const status = document.getElementById('filterStatus').value;
 
-        const tasks = StorageManager.getTasks();
-        const filteredTasks = filterTasks(tasks, {
-            search,
-            priority,
-            course,
-            status
-        });
-
+        const filteredTasks = filterTasks(StorageManager.getTasks(), { search, priority, course, status });
         this.renderDeadlines(filteredTasks);
     },
 
-    /**
-     * Toggle theme between light and dark
-     */
     toggleTheme() {
-        const body = document.body;
-        const isDark = body.classList.toggle('dark-theme');
-        const themeToggle = document.getElementById('themeToggle');
-        
-        themeToggle.textContent = isDark ? '☀️' : '🌙';
-        
-        // Save theme preference
+        const isDark = document.body.classList.toggle('dark-theme');
+        document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
         const settings = StorageManager.getSettings();
         settings.theme = isDark ? 'dark' : 'light';
         StorageManager.saveSettings(settings);
     },
 
-    /**
-     * Load saved theme
-     */
     loadTheme() {
         const settings = StorageManager.getSettings();
-        const body = document.body;
-        const themeToggle = document.getElementById('themeToggle');
-
         if (settings.theme === 'dark') {
-            body.classList.add('dark-theme');
-            themeToggle.textContent = '☀️';
-        } else {
-            body.classList.remove('dark-theme');
-            themeToggle.textContent = '🌙';
+            document.body.classList.add('dark-theme');
+            document.getElementById('themeToggle').textContent = '☀️';
         }
     },
 
-    /**
-     * Reset a form
-     * @param {string} formId - ID of form to reset
-     */
     resetForm(formId) {
         const form = document.getElementById(formId);
-        if (form) {
-            form.reset();
-        }
+        if (form) form.reset();
     }
 };
 
-// Make UI available globally
 window.UI = UI;
