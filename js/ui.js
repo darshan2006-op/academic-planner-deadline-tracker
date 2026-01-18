@@ -10,13 +10,13 @@ const UI = {
         this.showDeadlineSkeletons();
         this.showCourseSkeletons();
         
-        // Then load data with a small delay to show skeletons
+        // Delay to ensure skeletons are visible before loading data
         setTimeout(() => {
             this.updateStats();
             this.renderDeadlines();
             this.renderCourses();
             this.populateCourseSelects();
-        }, 500);
+        }, 200);
     },
 
     /**
@@ -78,57 +78,58 @@ const UI = {
      * Show skeleton loaders for stats
      */
     showStatsSkeletons() {
-        const statsGrid = document.querySelector('.stats-grid');
-        if (!statsGrid) return;
-        
-        statsGrid.innerHTML = `
-            <div class="skeleton-stat-card skeleton"></div>
-            <div class="skeleton-stat-card skeleton"></div>
-            <div class="skeleton-stat-card skeleton"></div>
-            <div class="skeleton-stat-card skeleton"></div>
-        `;
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            // Store original content
+            const originalHTML = card.innerHTML;
+            card.setAttribute('data-original-html', originalHTML);
+            
+            // Replace with skeleton
+            card.innerHTML = `
+                <div class="skeleton-stat-icon skeleton"></div>
+                <div class="skeleton-stat-info">
+                    <div class="skeleton-stat-number skeleton"></div>
+                    <div class="skeleton-stat-label skeleton"></div>
+                </div>
+            `;
+            card.classList.add('skeleton');
+        });
     },
-
     /**
      * Update statistics cards
      */
     updateStats() {
-        const tasks = StorageManager.getTasks();
-        const stats = calculateStatistics(tasks);
+        try {
+            const tasks = StorageManager.getTasks();
+            const stats = calculateStatistics(tasks);
 
-        // Remove skeletons and show real stats with animation
-        const statsGrid = document.querySelector('.stats-grid');
-        if (statsGrid) {
-            statsGrid.innerHTML = `
-                <div class="stat-card fade-in">
-                    <div class="stat-icon">📝</div>
-                    <div class="stat-info">
-                        <h3 id="totalTasks">${stats.total}</h3>
-                        <p>Total Tasks</p>
-                    </div>
-                </div>
-                <div class="stat-card fade-in delay-1">
-                    <div class="stat-icon">⏰</div>
-                    <div class="stat-info">
-                        <h3 id="upcomingTasks">${stats.pending}</h3>
-                        <p>Upcoming</p>
-                    </div>
-                </div>
-                <div class="stat-card fade-in delay-2">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-info">
-                        <h3 id="completedTasks">${stats.completed}</h3>
-                        <p>Completed</p>
-                    </div>
-                </div>
-                <div class="stat-card fade-in delay-3">
-                    <div class="stat-icon">🔥</div>
-                    <div class="stat-info">
-                        <h3 id="overdueTasks">${stats.overdue}</h3>
-                        <p>Overdue</p>
-                    </div>
-                </div>
-            `;
+            // Helper function to safely update element
+            const updateStatElement = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                    return true;
+                }
+                return false;
+            };
+
+            // Update all stat values
+            updateStatElement('totalTasks', stats.total);
+            updateStatElement('upcomingTasks', stats.pending);
+            updateStatElement('completedTasks', stats.completed);
+            updateStatElement('overdueTasks', stats.overdue);
+
+            // Add animations to stat cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                if (!card.classList.contains('fade-in')) {
+                    card.classList.add('fade-in');
+                    card.style.animationDelay = `${index * 0.1}s`;
+                }
+            });
+
+        } catch (error) {
+            console.error('Error updating stats:', error);
         }
     },
 
@@ -162,12 +163,10 @@ const UI = {
         ).join('');
 
         // Trigger animation
-        setTimeout(() => {
-            deadlinesList.querySelectorAll('.deadline-card').forEach((card, index) => {
-                card.classList.add('fade-in');
-                card.style.animationDelay = `${Math.min(index, 5) * 0.1}s`;
-            });
-        }, 10);
+        deadlinesList.querySelectorAll('.deadline-card').forEach((card, index) => {
+            card.classList.add('fade-in');
+            card.style.animationDelay = `${0.07 * Math.log2(index + 2)}s`; 
+        });
     },
 
     /**
@@ -184,7 +183,7 @@ const UI = {
         const completedClass = task.completed ? 'completed' : '';
 
         return `
-            <div class="deadline-card ${priorityClass} ${completedClass}" data-task-id="${task.id}" style="opacity: 0;">
+            <div class="deadline-card ${priorityClass} ${completedClass}" data-task-id="${task.id}"> 
                 <div class="deadline-info">
                     <h4 class="deadline-title">${task.title}</h4>
                     <div class="deadline-meta">
@@ -232,12 +231,10 @@ const UI = {
         ).join('');
 
         // Trigger animation
-        setTimeout(() => {
-            coursesList.querySelectorAll('.course-card').forEach((card, index) => {
-                card.classList.add('fade-in-scale');
-                card.style.animationDelay = `${Math.min(index, 5) * 0.1}s`;
-            });
-        }, 10);
+        coursesList.querySelectorAll('.course-card').forEach((card, index) => {
+            card.classList.add('fade-in-scale');
+            card.style.animationDelay = `${index * 0.1}s`; 
+        });
     },
 
     /**
@@ -251,7 +248,7 @@ const UI = {
         const stats = calculateStatistics(tasks);
 
         return `
-            <div class="course-card" style="--course-color: ${course.color}; opacity: 0;">
+            <div class="course-card" style="--course-color: ${course.color};"> 
                 <div class="course-header">
                     <h3 class="course-name">${course.name}</h3>
                     <p class="course-code">${course.code || 'No code'}</p>
