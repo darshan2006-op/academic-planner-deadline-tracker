@@ -513,3 +513,10 @@ body {
     opacity: 0.6;
     text-decoration: line-through;
 }
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
