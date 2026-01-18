@@ -140,9 +140,14 @@ const app = {
     },
 
     /**
-     * Handle adding a new deadline
+     * Handle adding a new deadline with loading state
      */
     handleAddDeadline() {
+        const submitBtn = document.querySelector('#deadlineForm button[type="submit"]');
+        
+        // Show loading state
+        UI.setButtonLoading(submitBtn, true);
+
         const title = document.getElementById('taskTitle').value.trim();
         const courseId = document.getElementById('taskCourse').value;
         const dueDate = document.getElementById('taskDate').value;
@@ -152,6 +157,8 @@ const app = {
         // Validation
         if (!title || !courseId || !dueDate) {
             alert('Please fill in all required fields!');
+            // Remove loading state
+            UI.setButtonLoading(submitBtn, false);
             return;
         }
 
@@ -164,23 +171,34 @@ const app = {
             description
         };
 
-        // Add to storage
-        StorageManager.addTask(task);
+        // Simulate API delay for better UX
+        setTimeout(() => {
+            // Add to storage
+            StorageManager.addTask(task);
 
-        // Update UI
-        UI.init();
+            // Update UI
+            UI.init();
 
-        // Close modal and reset form
-        UI.hideModal('deadlineModal');
-        UI.resetForm('deadlineForm');
+            // Close modal and reset form
+            UI.hideModal('deadlineModal');
+            UI.resetForm('deadlineForm');
 
-        console.log('✅ Deadline added successfully!');
+            console.log('✅ Deadline added successfully!');
+            
+            // Remove loading state
+            UI.setButtonLoading(submitBtn, false);
+        }, 600);
     },
 
     /**
-     * Handle adding a new course
+     * Handle adding a new course with loading state
      */
     handleAddCourse() {
+        const submitBtn = document.querySelector('#courseForm button[type="submit"]');
+        
+        // Show loading state
+        UI.setButtonLoading(submitBtn, true);
+
         const name = document.getElementById('courseName').value.trim();
         const code = document.getElementById('courseCode').value.trim();
         const instructor = document.getElementById('courseInstructor').value.trim();
@@ -189,6 +207,7 @@ const app = {
         // Validation
         if (!name) {
             alert('Please enter a course name!');
+            UI.setButtonLoading(submitBtn, false);
             return;
         }
 
@@ -200,17 +219,23 @@ const app = {
             color
         };
 
-        // Add to storage
-        StorageManager.addCourse(course);
+        // Simulate API delay
+        setTimeout(() => {
+            // Add to storage
+            StorageManager.addCourse(course);
 
-        // Update UI
-        UI.init();
+            // Update UI
+            UI.init();
 
-        // Close modal and reset form
-        UI.hideModal('courseModal');
-        UI.resetForm('courseForm');
+            // Close modal and reset form
+            UI.hideModal('courseModal');
+            UI.resetForm('courseForm');
 
-        console.log('✅ Course added successfully!');
+            console.log('✅ Course added successfully!');
+            
+            // Remove loading state
+            UI.setButtonLoading(submitBtn, false);
+        }, 600);
     },
 
     /**
@@ -218,9 +243,18 @@ const app = {
      * @param {string} taskId - ID of task to toggle
      */
     toggleTask(taskId) {
-        StorageManager.toggleTaskCompletion(taskId);
-        UI.init();
-        console.log('✅ Task status updated!');
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"] .icon-btn.complete`);
+        if (taskElement) {
+            const originalText = taskElement.textContent;
+            taskElement.classList.add('btn-loading');
+            taskElement.disabled = true;
+            
+            setTimeout(() => {
+                StorageManager.toggleTaskCompletion(taskId);
+                UI.init();
+                console.log('✅ Task status updated!');
+            }, 300);
+        }
     },
 
     /**
@@ -229,9 +263,17 @@ const app = {
      */
     deleteTask(taskId) {
         if (confirm('Are you sure you want to delete this deadline?')) {
-            StorageManager.deleteTask(taskId);
-            UI.init();
-            console.log('🗑️ Task deleted!');
+            const taskElement = document.querySelector(`[data-task-id="${taskId}"] .icon-btn.delete`);
+            if (taskElement) {
+                taskElement.classList.add('btn-loading');
+                taskElement.disabled = true;
+                
+                setTimeout(() => {
+                    StorageManager.deleteTask(taskId);
+                    UI.init();
+                    console.log('🗑️ Task deleted!');
+                }, 300);
+            }
         }
     },
 
@@ -247,26 +289,50 @@ const app = {
             if (!confirm(`This course has ${tasks.length} task(s). Deleting it will also delete all associated tasks. Continue?`)) {
                 return;
             }
-            // Delete all tasks for this course
-            tasks.forEach(task => StorageManager.deleteTask(task.id));
+        
         } else {
             if (!confirm('Are you sure you want to delete this course?')) {
                 return;
             }
         }
 
-        StorageManager.deleteCourse(courseId);
-        UI.init();
-        console.log('🗑️ Course deleted!');
+        // Find and show loading on delete button
+        const courseElement = document.querySelector(`.course-card [onclick*="${courseId}"]`);
+        if (courseElement) {
+            const originalText = courseElement.textContent;
+            courseElement.classList.add('btn-loading');
+            courseElement.disabled = true;
+            
+            setTimeout(() => {
+                // Delete all tasks for this course if any
+                tasks.forEach(task => StorageManager.deleteTask(task.id));
+                StorageManager.deleteCourse(courseId);
+                UI.init();
+                console.log('🗑️ Course deleted!');
+            }, 300);
+        }
     },
 
     /**
      * Export all data
      */
     exportData() {
-        const data = StorageManager.exportAll();
-        exportToJSON(data, `academic-planner-backup-${new Date().toISOString().split('T')[0]}.json`);
-        console.log('📥 Data exported successfully!');
+        const exportBtn = document.querySelector('[onclick*="exportData"]');
+        if (exportBtn) {
+            const originalText = exportBtn.textContent;
+            exportBtn.classList.add('btn-loading');
+            exportBtn.disabled = true;
+            
+            setTimeout(() => {
+                const data = StorageManager.exportAll();
+                exportToJSON(data, `academic-planner-backup-${new Date().toISOString().split('T')[0]}.json`);
+                console.log('📥 Data exported successfully!');
+                
+                exportBtn.classList.remove('btn-loading');
+                exportBtn.disabled = false;
+                exportBtn.textContent = originalText;
+            }, 300);
+        }
     },
 
     /**
@@ -286,9 +352,23 @@ const app = {
                 try {
                     const data = JSON.parse(event.target.result);
                     if (confirm('This will replace all current data. Continue?')) {
-                        StorageManager.importData(data);
-                        UI.init();
-                        console.log('📤 Data imported successfully!');
+                        // Show loading
+                        const importBtn = document.querySelector('[onclick*="importData"]');
+                        if (importBtn) {
+                            const originalText = importBtn.textContent;
+                            importBtn.classList.add('btn-loading');
+                            importBtn.disabled = true;
+                            
+                            setTimeout(() => {
+                                StorageManager.importData(data);
+                                UI.init();
+                                console.log('📤 Data imported successfully!');
+                                
+                                importBtn.classList.remove('btn-loading');
+                                importBtn.disabled = false;
+                                importBtn.textContent = originalText;
+                            }, 300);
+                        }
                     }
                 } catch (error) {
                     alert('Error importing data. Please check the file format.');

@@ -1,0 +1,304 @@
+/* loading-animations.css - Loading animations for Academic Planner */
+
+/* ===== LOADING SPINNERS ===== */
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+.loading-spinner.small {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+.loading-spinner.medium {
+    width: 40px;
+    height: 40px;
+}
+
+.loading-spinner.large {
+    width: 60px;
+    height: 60px;
+    border-width: 4px;
+}
+
+/* Dark theme support */
+.dark-theme .loading-spinner {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== SKELETON LOADERS ===== */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+/* Dark theme skeleton */
+.dark-theme .skeleton {
+    background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+}
+
+/* Skeleton cards for deadlines */
+.skeleton-deadline-card {
+    height: 100px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.skeleton-deadline-info {
+    flex: 1;
+}
+
+.skeleton-title {
+    height: 20px;
+    width: 70%;
+    margin-bottom: 0.75rem;
+}
+
+.skeleton-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.skeleton-meta-item {
+    height: 14px;
+    width: 80px;
+}
+
+/* Skeleton for course cards */
+.skeleton-course-card {
+    height: 180px;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.skeleton-course-header {
+    margin-bottom: 1rem;
+}
+
+.skeleton-course-name {
+    height: 24px;
+    width: 60%;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-course-code {
+    height: 16px;
+    width: 40%;
+}
+
+.skeleton-course-stats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.skeleton-course-stat {
+    height: 16px;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+/* Skeleton for stats cards */
+.skeleton-stat-card {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+}
+
+.skeleton-stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.skeleton-stat-info {
+    flex: 1;
+}
+
+.skeleton-stat-number {
+    height: 32px;
+    width: 50px;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-stat-label {
+    height: 16px;
+    width: 80px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* ===== FADE ANIMATIONS ===== */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.fade-in-scale {
+    animation: fadeInScale 0.4s ease-out forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ===== CONTENT LOADING STATES ===== */
+.loading-container {
+    position: relative;
+    min-height: 100px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    border-radius: var(--radius-md);
+}
+
+.dark-theme .loading-overlay {
+    background: rgba(17, 24, 39, 0.9);
+}
+
+/* ===== BUTTON LOADING STATES ===== */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.btn-secondary.btn-loading::after {
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-top-color: var(--text-primary);
+}
+
+/* ===== PAGE TRANSITIONS ===== */
+.view {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.view.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ===== MODAL ANIMATIONS ===== */
+.modal {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+/* Accessibility - Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner,
+    .skeleton,
+    .fade-in,
+    .fade-in-up,
+    .fade-in-scale,
+    .view,
+    .modal,
+    .modal-content {
+        animation: none !important;
+        transition: none !important;
+    }
+}

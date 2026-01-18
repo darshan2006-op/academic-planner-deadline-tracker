@@ -2,13 +2,91 @@
 
 const UI = {
     /**
-     * Initialize UI components
+     * Initialize UI components with loading animations
      */
     init() {
-        this.updateStats();
-        this.renderDeadlines();
-        this.renderCourses();
-        this.populateCourseSelects();
+        // Show skeleton loaders first
+        this.showStatsSkeletons();
+        this.showDeadlineSkeletons();
+        this.showCourseSkeletons();
+        
+        // Then load data with a small delay to show skeletons
+        setTimeout(() => {
+            this.updateStats();
+            this.renderDeadlines();
+            this.renderCourses();
+            this.populateCourseSelects();
+        }, 500);
+    },
+
+    /**
+     * Show skeleton loaders for deadlines
+     */
+    showDeadlineSkeletons() {
+        const deadlinesList = document.getElementById('deadlinesList');
+        if (!deadlinesList) return;
+        
+        deadlinesList.innerHTML = `
+            <div class="skeleton-deadline-card skeleton">
+                <div class="skeleton-deadline-info">
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="skeleton-deadline-card skeleton">
+                <div class="skeleton-deadline-info">
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="skeleton-deadline-card skeleton">
+                <div class="skeleton-deadline-info">
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                        <div class="skeleton-meta-item skeleton"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Show skeleton loaders for courses
+     */
+    showCourseSkeletons() {
+        const coursesList = document.getElementById('coursesList');
+        if (!coursesList) return;
+        
+        coursesList.innerHTML = `
+            <div class="skeleton-course-card skeleton"></div>
+            <div class="skeleton-course-card skeleton"></div>
+            <div class="skeleton-course-card skeleton"></div>
+        `;
+    },
+
+    /**
+     * Show skeleton loaders for stats
+     */
+    showStatsSkeletons() {
+        const statsGrid = document.querySelector('.stats-grid');
+        if (!statsGrid) return;
+        
+        statsGrid.innerHTML = `
+            <div class="skeleton-stat-card skeleton"></div>
+            <div class="skeleton-stat-card skeleton"></div>
+            <div class="skeleton-stat-card skeleton"></div>
+            <div class="skeleton-stat-card skeleton"></div>
+        `;
     },
 
     /**
@@ -18,39 +96,82 @@ const UI = {
         const tasks = StorageManager.getTasks();
         const stats = calculateStatistics(tasks);
 
-        document.getElementById('totalTasks').textContent = stats.total;
-        document.getElementById('upcomingTasks').textContent = stats.pending;
-        document.getElementById('completedTasks').textContent = stats.completed;
-        document.getElementById('overdueTasks').textContent = stats.overdue;
+        // Remove skeletons and show real stats with animation
+        const statsGrid = document.querySelector('.stats-grid');
+        if (statsGrid) {
+            statsGrid.innerHTML = `
+                <div class="stat-card fade-in">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <h3 id="totalTasks">${stats.total}</h3>
+                        <p>Total Tasks</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in delay-1">
+                    <div class="stat-icon">⏰</div>
+                    <div class="stat-info">
+                        <h3 id="upcomingTasks">${stats.pending}</h3>
+                        <p>Upcoming</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in delay-2">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <h3 id="completedTasks">${stats.completed}</h3>
+                        <p>Completed</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in delay-3">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-info">
+                        <h3 id="overdueTasks">${stats.overdue}</h3>
+                        <p>Overdue</p>
+                    </div>
+                </div>
+            `;
+        }
     },
 
     /**
-     * Render all deadlines
+     * Render all deadlines with fade-in animation
      * @param {Array} tasks - Optional filtered tasks array
      */
     renderDeadlines(tasks = null) {
         const deadlinesList = document.getElementById('deadlinesList');
+        if (!deadlinesList) return;
+        
         const tasksToRender = tasks || StorageManager.getTasks();
         const sortedTasks = sortTasksByDate(tasksToRender, 'asc');
 
         if (sortedTasks.length === 0) {
             deadlinesList.innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state fade-in">
                     <p>📚 No deadlines yet. Add your first one to get started!</p>
                 </div>
             `;
             return;
         }
 
-        deadlinesList.innerHTML = sortedTasks.map(task => this.createDeadlineCard(task)).join('');
+        deadlinesList.innerHTML = sortedTasks.map((task, index) => 
+            this.createDeadlineCard(task, index)
+        ).join('');
+
+        // Trigger animation
+        setTimeout(() => {
+            deadlinesList.querySelectorAll('.deadline-card').forEach((card, index) => {
+                card.classList.add('fade-in');
+                card.style.animationDelay = `${Math.min(index, 5) * 0.1}s`;
+            });
+        }, 10);
     },
 
     /**
-     * Create a deadline card HTML
+     * Create a deadline card HTML with animation
      * @param {Object} task - Task object
+     * @param {number} index - Index for animation delay
      * @returns {string} HTML string
      */
-    createDeadlineCard(task) {
+    createDeadlineCard(task, index = 0) {
         const course = StorageManager.getCourses().find(c => c.id === task.courseId);
         const courseName = course ? course.name : 'Unknown Course';
         const status = getTaskStatus(task.completed, task.dueDate);
@@ -58,7 +179,7 @@ const UI = {
         const completedClass = task.completed ? 'completed' : '';
 
         return `
-            <div class="deadline-card ${priorityClass} ${completedClass}" data-task-id="${task.id}">
+            <div class="deadline-card ${priorityClass} ${completedClass}" data-task-id="${task.id}" style="opacity: 0;">
                 <div class="deadline-info">
                     <h4 class="deadline-title">${task.title}</h4>
                     <div class="deadline-meta">
@@ -84,35 +205,48 @@ const UI = {
     },
 
     /**
-     * Render all courses
+     * Render all courses with animation
      */
     renderCourses() {
         const coursesList = document.getElementById('coursesList');
+        if (!coursesList) return;
+        
         const courses = StorageManager.getCourses();
 
         if (courses.length === 0) {
             coursesList.innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state fade-in">
                     <p>📖 No courses added yet. Start by adding your first course!</p>
                 </div>
             `;
             return;
         }
 
-        coursesList.innerHTML = courses.map(course => this.createCourseCard(course)).join('');
+        coursesList.innerHTML = courses.map((course, index) => 
+            this.createCourseCard(course, index)
+        ).join('');
+
+        // Trigger animation
+        setTimeout(() => {
+            coursesList.querySelectorAll('.course-card').forEach((card, index) => {
+                card.classList.add('fade-in-scale');
+                card.style.animationDelay = `${Math.min(index, 5) * 0.1}s`;
+            });
+        }, 10);
     },
 
     /**
-     * Create a course card HTML
+     * Create a course card HTML with animation
      * @param {Object} course - Course object
+     * @param {number} index - Index for animation delay
      * @returns {string} HTML string
      */
-    createCourseCard(course) {
+    createCourseCard(course, index = 0) {
         const tasks = StorageManager.getTasks().filter(t => t.courseId === course.id);
         const stats = calculateStatistics(tasks);
 
         return `
-            <div class="course-card" style="--course-color: ${course.color}">
+            <div class="course-card" style="--course-color: ${course.color}; opacity: 0;">
                 <div class="course-header">
                     <h3 class="course-name">${course.name}</h3>
                     <p class="course-code">${course.code || 'No code'}</p>
@@ -284,6 +418,27 @@ const UI = {
         const form = document.getElementById(formId);
         if (form) {
             form.reset();
+        }
+    },
+
+    /**
+     * Show button loading state
+     * @param {HTMLElement} button - Button element
+     * @param {boolean} isLoading - Whether to show loading state
+     */
+    setButtonLoading(button, isLoading) {
+        if (!button) return;
+        
+        if (isLoading) {
+            const originalText = button.textContent;
+            button.setAttribute('data-original-text', originalText);
+            button.classList.add('btn-loading');
+            button.disabled = true;
+        } else {
+            const originalText = button.getAttribute('data-original-text') || 'Submit';
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+            button.textContent = originalText;
         }
     }
 };
