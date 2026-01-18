@@ -1,5 +1,11 @@
 // Main Application Logic for Academic Planner
 
+const LOADING_CONFIG = {
+    FORM_SUBMIT_DELAY: 600,
+    ACTION_DELAY: 300,
+    SKELETON_DELAY: 200
+};
+
 const app = {
     /**
      * Initialize the application
@@ -176,21 +182,26 @@ const app = {
 
         // Simulate API delay for better UX
         setTimeout(() => {
-            // Add to storage
-            StorageManager.addTask(task);
+            try {
+                // Add to storage
+                StorageManager.addTask(task);
 
-            // Update UI
-            UI.init();
+                // Update UI
+                UI.init();
 
-            // Close modal and reset form
-            UI.hideModal('deadlineModal');
-            UI.resetForm('deadlineForm');
+                // Close modal and reset form
+                UI.hideModal('deadlineModal');
+                UI.resetForm('deadlineForm');
 
-            console.log('✅ Deadline added successfully!');
-            
-            // Remove loading state
-            UI.setButtonLoading(submitBtn, false);
-        }, 600);
+                console.log('✅ Deadline added successfully!');
+            } catch (error) {
+                console.error('Error adding deadline:', error);
+                alert('An error occurred while adding the deadline. Please try again.');
+            } finally {
+                // Remove loading state
+                UI.setButtonLoading(submitBtn, false);
+            }
+        }, LOADING_CONFIG.FORM_SUBMIT_DELAY);
     },
 
     /**
@@ -224,21 +235,26 @@ const app = {
 
         // Simulate API delay
         setTimeout(() => {
-            // Add to storage
-            StorageManager.addCourse(course);
+            try {
+                // Add to storage
+                StorageManager.addCourse(course);
 
-            // Update UI
-            UI.init();
+                // Update UI
+                UI.init();
 
-            // Close modal and reset form
-            UI.hideModal('courseModal');
-            UI.resetForm('courseForm');
+                // Close modal and reset form
+                UI.hideModal('courseModal');
+                UI.resetForm('courseForm');
 
-            console.log('✅ Course added successfully!');
-            
-            // Remove loading state
-            UI.setButtonLoading(submitBtn, false);
-        }, 600);
+                console.log('✅ Course added successfully!');
+            } catch (error) {
+                console.error('Error adding course:', error);
+                alert('An error occurred while adding the course. Please try again.');
+            } finally {
+                // Remove loading state
+                UI.setButtonLoading(submitBtn, false);
+            }
+        }, LOADING_CONFIG.FORM_SUBMIT_DELAY);
     },
 
     /**
@@ -253,10 +269,19 @@ const app = {
             taskElement.disabled = true;
             
             setTimeout(() => {
-                StorageManager.toggleTaskCompletion(taskId);
-                UI.init();
-                console.log('✅ Task status updated!');
-            }, 300);
+                try {
+                    StorageManager.toggleTaskCompletion(taskId);
+                    UI.init();
+                    console.log('✅ Task status updated!');
+                } catch (error) {
+                    console.error('Error toggling task:', error);
+                    alert('An error occurred while updating the task. Please try again.');
+                } finally {
+                    taskElement.classList.remove('btn-loading');
+                    taskElement.disabled = false;
+                    taskElement.textContent = originalText;
+                }
+            }, LOADING_CONFIG.ACTION_DELAY);
         }
     },
 
@@ -283,10 +308,20 @@ const app = {
             }
             
             setTimeout(() => {
-                StorageManager.deleteTask(taskId);
-                UI.init();
-                console.log('🗑️ Task deleted!');
-            }, 300);
+                try {
+                    StorageManager.deleteTask(taskId);
+                    UI.init();
+                    console.log('🗑️ Task deleted!');
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                    alert('An error occurred while deleting the task. Please try again.');
+                } finally {
+                    if (taskElement) {
+                        taskElement.classList.remove('btn-loading');
+                        taskElement.disabled = false;
+                    }
+                }
+            }, LOADING_CONFIG.ACTION_DELAY);
         });
     },
 
@@ -317,17 +352,70 @@ const app = {
             courseElement.disabled = true;
             
             setTimeout(() => {
-                // Delete all tasks for this course if any
-                tasks.forEach(task => StorageManager.deleteTask(task.id));
-                StorageManager.deleteCourse(courseId);
-                UI.init();
-                console.log('🗑️ Course deleted!');
-            }, 300);
+                try {
+                    // Delete all tasks for this course if any
+                    tasks.forEach(task => StorageManager.deleteTask(task.id));
+                    StorageManager.deleteCourse(courseId);
+                    UI.init();
+                    console.log('🗑️ Course deleted!');
+                } catch (error) {
+                    console.error('Error deleting course:', error);
+                    alert('An error occurred while deleting the course. Please try again.');
+                } finally {
+                    courseElement.classList.remove('btn-loading');
+                    courseElement.disabled = false;
+                    courseElement.textContent = originalText;
+                }
+            }, LOADING_CONFIG.ACTION_DELAY);
         }
     },
 
     /**
-     * Export all data
+     * Show or hide page-level loading overlay
+     * @param {boolean} show - Whether to show the loading overlay
+     */
+    showPageLoading(show) {
+        let overlay = document.getElementById('page-loading-overlay');
+        
+        if (show) {
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'page-loading-overlay';
+                overlay.innerHTML = `
+                    <div class="loading-overlay">
+                        <div class="loading-spinner large"></div>
+                        <p>Processing...</p>
+                    </div>
+                `;
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255, 255, 255, 0.9);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                    flex-direction: column;
+                    gap: 1rem;
+                `;
+                
+                // Add dark theme support
+                if (document.body.classList.contains('dark-theme')) {
+                    overlay.style.background = 'rgba(17, 24, 39, 0.9)';
+                }
+                document.body.appendChild(overlay);
+            }
+            overlay.style.display = 'flex';
+        } else if (overlay) {
+            overlay.style.display = 'none';
+        }
+    },
+
+    /**
+     * Export all data with proper loading
      */
     exportData() {
         const exportBtn = document.querySelector('[onclick*="exportData"]');
@@ -336,15 +424,24 @@ const app = {
             exportBtn.classList.add('btn-loading');
             exportBtn.disabled = true;
             
+            // Show page-level loading
+            this.showPageLoading(true);
+            
             setTimeout(() => {
-                const data = StorageManager.exportAll();
-                exportToJSON(data, `academic-planner-backup-${new Date().toISOString().split('T')[0]}.json`);
-                console.log('📥 Data exported successfully!');
-                
-                exportBtn.classList.remove('btn-loading');
-                exportBtn.disabled = false;
-                exportBtn.textContent = originalText;
-            }, 300);
+                try {
+                    const data = StorageManager.exportAll();
+                    exportToJSON(data, `academic-planner-backup-${new Date().toISOString().split('T')[0]}.json`);
+                    console.log('📥 Data exported successfully!');
+                } catch (error) {
+                    console.error('Export failed:', error);
+                    alert('Failed to export data. Please try again.');
+                } finally {
+                    exportBtn.classList.remove('btn-loading');
+                    exportBtn.disabled = false;
+                    exportBtn.textContent = originalText;
+                    this.showPageLoading(false);
+                }
+            }, LOADING_CONFIG.ACTION_DELAY);
         }
     },
 
@@ -372,15 +469,24 @@ const app = {
                             importBtn.classList.add('btn-loading');
                             importBtn.disabled = true;
                             
+                            // Show page-level loading
+                            this.showPageLoading(true);
+                            
                             setTimeout(() => {
-                                StorageManager.importData(data);
-                                UI.init();
-                                console.log('📤 Data imported successfully!');
-                                
-                                importBtn.classList.remove('btn-loading');
-                                importBtn.disabled = false;
-                                importBtn.textContent = originalText;
-                            }, 300);
+                                try {
+                                    StorageManager.importData(data);
+                                    UI.init();
+                                    console.log('📤 Data imported successfully!');
+                                } catch (error) {
+                                    console.error('Import failed:', error);
+                                    alert('Failed to import data. Please check the file format.');
+                                } finally {
+                                    importBtn.classList.remove('btn-loading');
+                                    importBtn.disabled = false;
+                                    importBtn.textContent = originalText;
+                                    this.showPageLoading(false);
+                                }
+                            }, LOADING_CONFIG.ACTION_DELAY);
                         }
                     }
                 } catch (error) {
