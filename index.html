@@ -22,7 +22,12 @@
                     <button class="nav-btn" data-view="calendar">Calendar</button>
                     <button class="nav-btn" data-view="statistics">Statistics</button>
                 </nav>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+
+                <!-- Theme + Help buttons container -->
+                <div class="header-buttons">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+                    <button id="shortcutsHelpBtn" aria-label="Show keyboard shortcuts">?</button>
+                </div>
             </div>
         </div>
     </header>
@@ -144,6 +149,21 @@
             </section>
         </div>
     </main>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcutsModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="shortcutsTitle">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shortcutsTitle">Keyboard Shortcuts</h2>
+                <button class="close-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <ul class="shortcuts-list">
+                <li><kbd>Ctrl</kbd> + <kbd>K</kbd>: Search deadlines</li>
+                <li><kbd>Escape</kbd>: Close modals</li>
+                <!-- Add more shortcuts if needed -->
+            </ul>
+        </div>
+    </div>
 
     <!-- Add Deadline Modal -->
     <div id="deadlineModal" class="modal">

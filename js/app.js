@@ -49,6 +49,11 @@ const app = {
             UI.showModal('courseModal');
         });
 
+        // Keyboard Shortcuts Help button
+        document.getElementById('shortcutsHelpBtn')?.addEventListener('click', () => {
+            UI.showModal('shortcutsModal');
+        });
+
         // Close modal buttons
         document.getElementById('closeDeadlineModal')?.addEventListener('click', () => {
             UI.hideModal('deadlineModal');
@@ -58,6 +63,10 @@ const app = {
         document.getElementById('closeCourseModal')?.addEventListener('click', () => {
             UI.hideModal('courseModal');
             UI.resetForm('courseForm');
+        });
+
+        document.querySelector('#shortcutsModal .close-btn')?.addEventListener('click', () => {
+            UI.hideModal('shortcutsModal');
         });
 
         // Cancel buttons
@@ -106,6 +115,7 @@ const app = {
                 UI.hideModal('courseModal');
                 UI.resetForm('deadlineForm');
                 UI.resetForm('courseForm');
+                UI.hideModal('shortcutsModal');
             }
         });
 
@@ -115,6 +125,7 @@ const app = {
             if (e.key === 'Escape') {
                 UI.hideModal('deadlineModal');
                 UI.hideModal('courseModal');
+                UI.hideModal('shortcutsModal');
             }
             
             // Ctrl/Cmd + K for search focus

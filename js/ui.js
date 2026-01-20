@@ -189,6 +189,7 @@ const UI = {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
         }
     },
 
@@ -200,6 +201,7 @@ const UI = {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
         }
     },
 
